@@ -26,6 +26,7 @@ namespace climatobservations
     {
 
         DbRepository db;
+        Category snowCategory; 
 
         public MainWindow()
         {
@@ -36,45 +37,62 @@ namespace climatobservations
         }
 
 
-        public Observer GetObserver(string observerName)
-        {
-            string[] subs = observerName.Split(' ');
+        // REVIDERAD 2022-04-09
+        // ANVÄMD DATABASEN SOM SKICKADES IN I MOODLE DÅ DEN HAR CONSTRAINTS
+        // ANVÄND DUBBELKLICK FÖR ATT SE OCH ÄNDRA OBSERVATIONER UNDER PRESENTERA OBSERVATIONER 
+       
+
+        private Observer GetObserver(string observerName)
+        { 
+            var subs = observerName.Split(' ');
             string firstName = subs[0];
             string lastName = subs[1];
-            var observer = new Observer();
-            observer.Firstname = firstName;
-            observer.Lastname = lastName;
+
+            Observer observer = new Observer()
+            {
+                Firstname = firstName,
+                Lastname = lastName
+            };
             return observer;
         }
 
-
         private void btnAddObserver_Click(object sender, RoutedEventArgs e)
         {
-            var observerName = txtNameObserver.Text;
+            string observerName = txtNameObserver.Text;
             var observer = GetObserver(observerName);
-            
-            db.AddObserver(observer);
+            db.AddObserver(observer); // Skickar objektet till db
+            MessageBox.Show($"Observatören är nu tillagd.");
+            txtNameObserver.Text = null; 
         }
-
 
         private void btnRemoveObserver_Click(object sender, RoutedEventArgs e)
         {
-            var observerName = txtNameObserver.Text;
+            string observerName = txtNameObserver.Text;
             var observer = GetObserver(observerName);
-
-            db.RemoveObserver(observer);
+   
+            try
+            {
+                db.RemoveObserver(observer);
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message == "Allvarligt fel")
+                {
+                    throw;
+                }
+                else
+                {
+                    MessageBox.Show($"Du kan inte ta bort en observatör som har en observation.");
+                }
+            }
             txtNameObserver.Clear();
         }
-
 
         private void btnShowObserver_Click(object sender, RoutedEventArgs e)
         {
             var observers = db.GetObserver();
-
-            foreach (var observer in observers.OrderBy(x => x.Lastname)) // Sorterar efternamn https://stackoverflow.com/questions/188141/listt-orderby-alphabetical-order Linq-expression.
-            {
-                lstbox.Items.Add(observer.Firstname + " " + observer.Lastname);
-            }
+      
+            lstbox.ItemsSource = observers.OrderBy(x => x.Lastname); //Sorterar efternamn https://stackoverflow.com/questions/188141/listt-orderby-alphabetical-order Linq-expression.
         }
 
         private void btnAddObservation_Click(object sender, RoutedEventArgs e) 
@@ -85,39 +103,35 @@ namespace climatobservations
             }
             else
             {
-                decimal value; 
-                string observerName = Convert.ToString(lstbox.SelectedItem);
-                string categoryName = Convert.ToString(lstboxCategory.SelectedItem);
-                try
+                decimal value;
+                var selectedObserver = (Observer)lstbox.SelectedItem; 
+                var selectedCategory = (Category)lstboxCategory.SelectedItem;   
+
+                try 
                 {
                     value = Convert.ToDecimal(txtMeasurement.Text);
                 }
-                catch (Exception)
+                catch (Exception) // Catch fångar upp om value exempelvis innehåller bokstäver eller null, börjar sedan om via return
                 {
                     MessageBox.Show($"Ange mätvärde i siffror.");
                     return; 
                 }
 
-                var observer = GetObserver(observerName);
-                var observers = db.GetObserver();
+                var observation = db.GetObservationByObserverId(selectedObserver); // Checkar om observation redan finns 
 
-                observer = observers.Where(x => x.Lastname == observer.Lastname && x.Firstname == observer.Firstname).FirstOrDefault(); // Hämta observer(id) https://stackoverflow.com/questions/15536830/linq-firstordefault-then-select Linq-expression.
-                var observation = db.GetObservationByObserverId(observer);
-
-                if(observation == default(Observation)) // Om värdet är null så läggs ett datum för observation in
+                if (observation == default(Observation)) // Om värdet är null så läggs ett datum för observation in
                 {
-                    db.AddObservation(observer, DateTime.Today); //Lägger autodatum i observation
-                    observation = db.GetObservationByObserverId(observer);
+                    db.AddObservation(selectedObserver, DateTime.Today); // Lägger automatiskt datum i observation - en observatör endast ha en observation dock flera mätvärden
+                    observation = db.GetObservationByObserverId(selectedObserver);
                 }
 
-                if (categoryName == "Fjällripa vinterdräkt")
+                if (selectedCategory.Id == 4) // Ändrad från sträng till objekt
                 {
                     try
                     {
                         decimal snowdepth = Convert.ToDecimal(txtMeasurementSnow.Text);
-                        var snowcategory = GetCategory("Snödjup");
-                        db.AddMeasurement(observation, snowcategory, snowdepth);
-                        ShowObservation(observer, observation, snowcategory, snowdepth);
+                        db.AddMeasurement(observation, snowCategory, snowdepth);
+                        ShowObservation(selectedObserver, observation, snowCategory, snowdepth);
                     }
                     catch (Exception)
                     {
@@ -125,56 +139,83 @@ namespace climatobservations
                         return;
                     }    
                 }
-                var category = GetCategory(categoryName);
-                db.AddMeasurement(observation, category, value);
-                ShowObservation(observer, observation, category, value);
+                db.AddMeasurement(observation, selectedCategory, value);
+                ShowObservation(selectedObserver, observation, selectedCategory, value);
                 MessageBox.Show($"Tack! Din observation är nu tillagd.");
-                lstboxObservation.Visibility = Visibility.Visible;
             }
         }
 
-
-        private Category GetCategory(string categoryName)
-        {  
-            var categories = db.GetCategory();
-            var category = categories.Where(x => x.Name == categoryName).FirstOrDefault();
-            return category; 
-        }
-
-
-        private void lstbox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void lstbox_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
+            if (lstbox.SelectedItem == null)
+            {
+                return;
+            }
+
             txtMeasurement.Visibility = Visibility.Visible; 
             lbl.Visibility = Visibility.Visible;
             lstboxCategory.Visibility = Visibility.Visible;
             btnAddObservation.Visibility = Visibility.Visible;
+
+            Observer observer = (Observer)lstbox.SelectedItem;   
+            PopulateObservations(observer);
         }
 
-        private void lstbox_MouseDoubleClick2(object sender, MouseButtonEventArgs e)
+        private void PopulateObservations(Observer observer)
         {
-            var observation = Convert.ToString(lstboxObservation.SelectedItem);
-            var string_array = observation.Split(':');
-            lstbox.SelectedItem = string_array[0];
-            lstboxCategory.SelectedItem = string_array[2];
-            txtMeasurement.Text = string_array[3]; 
+            var observation = db.GetObservationByObserverId(observer);
+
+            if (observation == default(Observation))
+            { 
+                return; 
+            }
+
+            List <Measurement> measurements = db.GetMeasurementByObservationId(observation); // För att visa alla mätpunkter som är gjorda
+            var categories = lstboxCategory.ItemsSource;
+            //List <Category> categories = db.GetCategory();
+
+            foreach (Measurement measurement in measurements)
+            {
+                foreach (Category category in categories)
+                {
+                    if (measurement.Category_Id == category.Id)
+                    {
+                        ShowObservation(observer, observation, category, (decimal)measurement.Value);
+                    }
+                }
+            }
         }
 
-        private void PopulateCategory()
+        private void lstbox_MouseDoubleClick2(object sender, MouseButtonEventArgs e) // Ändra observation i listbox observation
+        {
+            var climateObservation = (Climate)(lstboxObservation.SelectedItem);
+
+            lstbox.SelectedItem = climateObservation.observer;
+            lstboxCategory.SelectedItem = climateObservation.category;
+            txtMeasurement.Text = climateObservation.value.ToString(); 
+        }
+
+        private void PopulateCategory() // Populeras från start men är hidden tills observatör är tillagd
         {
             var categories = db.GetCategory();
 
             foreach (var category in categories)
             {
-                lstboxCategory.Items.Add(category.Name);
+                if (category.Id == 11)
+                {
+                    snowCategory = category;
+                }
             }
+
+            lstboxCategory.ItemsSource = categories;
         }
 
    
         private void lstboxCategory_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            string categoryName = Convert.ToString(lstboxCategory.SelectedItem);
+            var selectedCategory = (Category)lstboxCategory.SelectedItem;
 
-            if (categoryName == "Fjällripa vinterdräkt")
+            if (selectedCategory != default(Category) && selectedCategory.Id == 4)
             {
                 txtMeasurementSnow.Visibility = Visibility.Visible;
             }
@@ -182,12 +223,16 @@ namespace climatobservations
             {
                 txtMeasurementSnow.Visibility = Visibility.Hidden;
             }
-
         }
 
         private void ShowObservation(Observer observer, Observation observation, Category category, decimal value)
         {
-            lstboxObservation.Items.Add(observer.Firstname + " " + observer.Lastname + ":" + observation.Date.ToString("yyyy-MM-dd") + ":" + category.Name + ":" + value);
+            Climate climateObservation = new Climate();
+            climateObservation.observation = observation;
+            climateObservation.observer = observer;
+            climateObservation.category = category;
+            climateObservation.value = value;   
+            lstboxObservation.Items.Add(climateObservation);
         }
     }
 }

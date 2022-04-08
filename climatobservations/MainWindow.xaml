@@ -5,21 +5,25 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:climatobservations"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <TextBox x:Name="txtNameObserver" HorizontalAlignment="Left" Margin="53,42,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-        <Label Content="Namn på observatör" HorizontalAlignment="Left" Margin="47,11,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="btnAddObserver" Content="Lägg till" HorizontalAlignment="Left" Margin="54,73,0,0" VerticalAlignment="Top" Click="btnAddObserver_Click" Width="50"/>
-        <Button x:Name="btnRemoveObserver" Content="Ta bort" HorizontalAlignment="Left" Margin="54,104,0,0" VerticalAlignment="Top" Width="50" Click="btnRemoveObserver_Click"/>
-        <ListBox x:Name="lstbox" Margin="491,41,43,303" MouseDoubleClick="lstbox_MouseDoubleClick"/>
-        <Label Content="Presentera observatör" HorizontalAlignment="Left" Margin="488,12,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="btnShowObserver" Content="Visa observatör" HorizontalAlignment="Left" Margin="493,142,0,0" VerticalAlignment="Top" Click="btnShowObserver_Click" Width="125"/>
-        <TextBox x:Name="txtMeasurement" HorizontalAlignment="Left" Margin="496,311,0,0" TextWrapping="Wrap" Text="Ange antal i mått, styck, celsius i siffror..." VerticalAlignment="Top" Width="263" Visibility="Hidden"/>
-        <Label x:Name="lbl" Content="Registrera observation" HorizontalAlignment="Left" Margin="493,189,0,0" VerticalAlignment="Top" Visibility="Hidden"/>
-        <Button x:Name="btnAddObservation" Content="Lägg till observation" HorizontalAlignment="Left" Margin="498,375,0,0" VerticalAlignment="Top" Width="124" Click="btnAddObservation_Click" Visibility="Hidden"/>
-        <ListBox x:Name="lstboxCategory" Margin="495,217,40,134" Visibility="Hidden" MouseLeftButtonUp="lstboxCategory_MouseLeftButtonUp" />
-        <TextBox x:Name="txtMeasurementSnow" HorizontalAlignment="Left" Margin="497,339,0,0" TextWrapping="Wrap" Text="Ange snödjup i cm... " VerticalAlignment="Top" Width="263" Visibility="Hidden"/>
-        <ListBox x:Name="lstboxObservation" Margin="22,219,441,129" Visibility="Hidden" MouseDoubleClick="lstbox_MouseDoubleClick2"/>
-        <Label Content="Presentera observationer" HorizontalAlignment="Left" Margin="23,190,0,0" VerticalAlignment="Top" Visibility="Hidden"/>
+        Title="MainWindow" Height="456" Width="816">
+    <Grid Margin="0,0,20,11">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="194*"/>
+            <ColumnDefinition Width="5*"/>
+        </Grid.ColumnDefinitions>
+        <TextBox x:Name="txtNameObserver" HorizontalAlignment="Left" Margin="53,42,0,0" Text="" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Height="18"/>
+        <Label Content="Namn på observatör" HorizontalAlignment="Left" Margin="47,11,0,0" VerticalAlignment="Top" Height="26" Width="119"/>
+        <Button x:Name="btnAddObserver" Content="Lägg till" HorizontalAlignment="Left" Margin="54,73,0,0" VerticalAlignment="Top" Click="btnAddObserver_Click" Width="50" Height="20"/>
+        <Button x:Name="btnRemoveObserver" Content="Ta bort" HorizontalAlignment="Left" Margin="54,98,0,0" VerticalAlignment="Top" Width="50" Click="btnRemoveObserver_Click" Height="20"/>
+        <ListBox x:Name="lstbox" Margin="491,41,34,303"  MouseLeftButtonUp="lstbox_MouseLeftButtonUp"/>
+        <Label Content="Presentera observatör" HorizontalAlignment="Left" Margin="488,12,0,0" VerticalAlignment="Top" Height="26" Width="126"/>
+        <Button x:Name="btnShowObserver" Content="Visa observatör" HorizontalAlignment="Left" Margin="492,129,0,0" VerticalAlignment="Top" Click="btnShowObserver_Click" Width="125" Height="20"/>
+        <TextBox x:Name="txtMeasurement" HorizontalAlignment="Left" Margin="500,338,0,0" TextWrapping="Wrap" Text="Ange antal i mått, styck, celsius i siffror..." VerticalAlignment="Top" Width="245" Visibility="Hidden" Height="18"/>
+        <Label x:Name="lbl" Content="Registrera observation" HorizontalAlignment="Left" Margin="494,164,0,0" VerticalAlignment="Top" Visibility="Hidden" Height="26" Width="129"/>
+        <Button x:Name="btnAddObservation" Content="Lägg till observation" HorizontalAlignment="Left" Margin="502,387,0,0" VerticalAlignment="Top" Width="124" Click="btnAddObservation_Click" Visibility="Hidden" Height="20"/>
+        <ListBox x:Name="lstboxCategory" Margin="495,187,31,99" Visibility="Hidden" MouseLeftButtonUp="lstboxCategory_MouseLeftButtonUp" />
+        <TextBox x:Name="txtMeasurementSnow" HorizontalAlignment="Left" Margin="499,361,0,0" TextWrapping="Wrap" Text="Ange snödjup i cm... " VerticalAlignment="Top" Width="246" Visibility="Hidden" Height="18"/>
+        <ListBox x:Name="lstboxObservation" Margin="54,189,392,34" MouseDoubleClick="lstbox_MouseDoubleClick2"/>
+        <Label Content="Presentera observationer" HorizontalAlignment="Left" Margin="54,161,0,0" VerticalAlignment="Top" Height="26" Width="142"/>
     </Grid>
 </Window>

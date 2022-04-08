@@ -24,7 +24,7 @@ namespace climatobservations.Repositories
         }
 
 
-        public void AddObserver(Observer observer)
+        public void AddObserver(Observer observer) 
         {
             try
             {
@@ -42,14 +42,14 @@ namespace climatobservations.Repositories
             }
             catch (PostgresException ex)
             {
-                if (ex.SqlState != "23505")
+                if (ex.SqlState != "23505") // Felkoden 23505: användare redan finns pga sammansatt nyckel. Ingeting händer om firstname och lastname redan finns i tabellen. 
                 {
-                    throw new Exception("Allvarligt fel", ex);
+                    throw new Exception("Allvarligt fel", ex);  
                 } 
             }
         }
 
-        public Observation GetObservationByObserverId(Observer observer)
+        public Observation GetObservationByObserverId(Observer observer) // Metod som hämtar observationens id från observer id
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
@@ -59,7 +59,7 @@ namespace climatobservations.Repositories
             sql.AppendLine("from observation ");
             sql.AppendLine("where observer_id =@observer_id "); 
 
-            using var command = new NpgsqlCommand(sql.ToString(), conn);
+            using var command = new NpgsqlCommand(sql.ToString(), conn); 
             command.Parameters.AddWithValue("observer_id", observer.Id); 
 
             Observation? observation = null;
@@ -82,14 +82,13 @@ namespace climatobservations.Repositories
         }
 
         public List<Observer> GetObserver() 
-        {
-            
+        {           
                 var observers = new List<Observer>(); // Skapa lista 
                 using var conn = new NpgsqlConnection(_connectionString); // Skapar databasobjekt
                 conn.Open();                                              // Kopplar upp mot databas
                 Observer observer = null;
                 using var cmd = new NpgsqlCommand();
-                cmd.CommandText = "select * from observer";
+                cmd.CommandText = "select * from observer"; // Tar in samtliga observatörer, hade kunnat effektiviserats genom hämta via id eller namn
                 cmd.Connection = conn;
 
 
@@ -97,7 +96,6 @@ namespace climatobservations.Repositories
             {
                 while (reader.Read())
                 {
-
                     observer = new Observer()
                     {
                         Id = reader.GetInt32(0),
@@ -129,12 +127,14 @@ namespace climatobservations.Repositories
             }
             catch (PostgresException ex)
             {
-                if (ex.SqlState == "23503") 
+                if (ex.SqlState == "23503") // Kan inte ta bort en observatör som gjort observationer 
                 {
-                    throw new Exception("Du försöker ta bort en observatör som har gjort observationer.", ex);  
+                    throw ex;
                 }
-
-                throw new Exception("Allvarligt fel", ex);
+                else
+                {
+                    throw new Exception("Allvarligt fel", ex);
+                }
             }
         }
 
@@ -160,7 +160,7 @@ namespace climatobservations.Repositories
             }
             catch (PostgresException ex)
             {
-                if (ex.SqlState == "23505")
+                if (ex.SqlState == "23505") // Uppdaterar measurement då en observatör endast kan ha en observation (datum).  
                 {
                     using var conn = new NpgsqlConnection(_connectionString);
                     conn.Open();
@@ -185,18 +185,54 @@ namespace climatobservations.Repositories
 
         }
 
-        public void AddObservation(Observer observer, DateTime date) 
+
+        public List<Measurement> GetMeasurementByObservationId(Observation observation)
+        {
+            using var conn = new NpgsqlConnection(_connectionString);
+            conn.Open();
+
+            StringBuilder sql = new StringBuilder("select ");
+            sql.AppendLine("id, value, observation_id, category_id ");
+            sql.AppendLine("from measurement ");
+            sql.AppendLine("where observation_id =@observation_id ");
+
+            using var command = new NpgsqlCommand(sql.ToString(), conn);
+            command.Parameters.AddWithValue("observation_id", observation.Id);
+
+            List<Measurement> measurements = new List<Measurement>();
+            Measurement measurement = null;
+            using (var reader = command.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+
+                    measurement = new Measurement()
+                    {
+                        Id = reader.GetInt32(0),
+                        Value = (float)reader["value"],
+                        Observation_Id = (int)reader["observation_id"],
+                        Category_Id = (int)reader["category_id"]
+                    };
+                    
+                    measurements.Add(measurement);
+                }
+            }
+            return measurements; 
+        }
+
+
+        public void AddObservation(Observer selectedObserver, DateTime date) 
         {
             using var conn = new NpgsqlConnection(_connectionString);
             conn.Open();
 
             StringBuilder sql = new StringBuilder("insert into observation ");
             sql.AppendLine("(date, observer_id, geolocation_id) ");
-            sql.AppendLine("values (@date ,@observer_id, 4) ");
+            sql.AppendLine("values (@date ,@observer_id, 4) "); // Geolocation Id är alltid densamma "4" Hagaparken.
 
             using var command = new NpgsqlCommand(sql.ToString(), conn);
             command.Parameters.AddWithValue("date", date);
-            command.Parameters.AddWithValue("observer_id", observer.Id);
+            command.Parameters.AddWithValue("observer_id", selectedObserver.Id);
 
             command.ExecuteNonQuery();
         }
@@ -232,6 +268,7 @@ namespace climatobservations.Repositories
                 }
 
             }
+
         }
     }
 }

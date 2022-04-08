@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace climatobservations.Models
 {
-    internal class Observation
+    public class Observation
     {
         public int Id { get; set; }
         public DateTime Date { get; set; }
